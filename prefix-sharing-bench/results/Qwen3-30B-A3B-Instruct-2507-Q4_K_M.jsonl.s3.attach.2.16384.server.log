@@ -1,0 +1,39 @@
+0.00.093.389 I srv  llama_server: initializing ...
+0.00.093.402 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.093.757 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.097.906 I srv    load_model: loading model '/localhome/local-rochaudhari/roshan/models/Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf'
+0.00.675.362 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.04.026.424 I cmn          init: llama threadpool init, n_threads = 16
+0.04.154.064 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 196608, kv_unified = 'true'
+0.04.160.549 I srv  llama_server: model loaded
+0.04.160.555 I srv  llama_server: listening on http://127.0.0.1:8091
+0.04.667.066 I slot get_availabl: id  0 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.04.667.903 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.07.815.987 I slot  prefix_save: id  0 | task 0 | saved prompt prefix to the prompt cache, n_tokens = 13959, n_checkpoints = 0, size = 695.385 MiB
+0.08.099.805 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  16007, progress = 0.58, t =   3.43 s / 4664.66 tokens per second
+0.08.671.450 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  18055, progress = 0.66, t =   4.00 s / 4510.16 tokens per second
+0.09.279.696 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  20103, progress = 0.73, t =   4.61 s / 4359.38 tokens per second
+0.09.924.266 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  22151, progress = 0.81, t =   5.26 s / 4214.43 tokens per second
+0.10.603.673 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  24199, progress = 0.88, t =   5.94 s / 4077.06 tokens per second
+0.11.322.010 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  26247, progress = 0.96, t =   6.65 s / 3944.69 tokens per second
+0.12.515.375 I slot get_availabl: id  1 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.12.516.434 I slot apply_attach: id  1 | task -1 | attached 13962 prompt tokens from slot 0
+0.12.517.191 I slot launch_slot_: id  1 | task 36 | processing task, is_child = 0
+0.16.007.571 I slot print_timing: id  1 | task 36 | prompt processing, n_tokens =   8188, progress = 0.81, t =   3.49 s / 2346.20 tokens per second
+0.16.975.109 I slot print_timing: id  1 | task 36 | prompt processing, n_tokens =  10235, progress = 0.88, t =   4.46 s / 2296.17 tokens per second
+0.17.977.941 I slot print_timing: id  1 | task 36 | prompt processing, n_tokens =  12282, progress = 0.96, t =   5.46 s / 2249.35 tokens per second
+0.19.123.497 I slot get_availabl: id  2 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.19.124.540 I slot apply_attach: id  2 | task -1 | attached 13962 prompt tokens from slot 0
+0.19.125.178 I slot launch_slot_: id  2 | task 63 | processing task, is_child = 0
+0.22.420.217 I slot print_timing: id  2 | task 63 | prompt processing, n_tokens =   6138, progress = 0.73, t =   3.29 s / 1863.10 tokens per second
+0.23.595.602 I slot print_timing: id  2 | task 63 | prompt processing, n_tokens =   8184, progress = 0.81, t =   4.47 s / 1830.93 tokens per second
+0.24.807.141 I slot print_timing: id  2 | task 63 | prompt processing, n_tokens =  10230, progress = 0.88, t =   5.68 s / 1800.62 tokens per second
+0.26.058.014 I slot print_timing: id  2 | task 63 | prompt processing, n_tokens =  12276, progress = 0.96, t =   6.93 s / 1770.84 tokens per second
+0.28.525.745 I slot print_timing: id  0 | task 0 | n_gen =    100, tg =   6.05 t/s, tg_3s =   6.11 t/s
+0.29.554.119 I slot print_timing: id  1 | task 36 | n_gen =    100, tg =   9.03 t/s, tg_3s =   9.12 t/s
+0.30.518.249 I slot print_timing: id  2 | task 63 | n_gen =    100, tg =  27.05 t/s, tg_3s =  27.33 t/s
+0.31.561.486 I slot print_timing: id  0 | task 0 | n_gen =    182, tg =   9.33 t/s, tg_3s =  27.01 t/s
+0.31.898.734 W srv          stop: cancel task, id_task = 0
+0.31.898.988 W srv          stop: cancel task, id_task = 36
+0.31.898.995 I srv    operator(): operator(): cleaning up before exit...
+0.31.899.083 W srv          stop: cancel task, id_task = 63

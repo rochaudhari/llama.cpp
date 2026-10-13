@@ -1,0 +1,51 @@
+0.00.087.914 I srv  llama_server: initializing ...
+0.00.087.925 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.088.283 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.092.419 I srv    load_model: loading model '/localhome/local-rochaudhari/roshan/models/Qwen3.8-27B-UD-Q4_K_M.gguf'
+0.01.031.215 W model has unused tensor blk.64.attn_norm.weight (size = 20480 bytes) -- ignoring
+0.01.031.223 W model has unused tensor blk.64.post_attention_norm.weight (size = 20480 bytes) -- ignoring
+0.01.031.231 W model has unused tensor blk.64.attn_q.weight (size = 51609600 bytes) -- ignoring
+0.01.031.234 W model has unused tensor blk.64.attn_k.weight (size = 5570560 bytes) -- ignoring
+0.01.031.237 W model has unused tensor blk.64.attn_v.weight (size = 5570560 bytes) -- ignoring
+0.01.031.247 W model has unused tensor blk.64.attn_output.weight (size = 25804800 bytes) -- ignoring
+0.01.031.251 W model has unused tensor blk.64.attn_q_norm.weight (size = 1024 bytes) -- ignoring
+0.01.031.254 W model has unused tensor blk.64.attn_k_norm.weight (size = 1024 bytes) -- ignoring
+0.01.031.257 W model has unused tensor blk.64.ffn_gate.weight (size = 73113600 bytes) -- ignoring
+0.01.031.260 W model has unused tensor blk.64.ffn_down.weight (size = 73113600 bytes) -- ignoring
+0.01.031.263 W model has unused tensor blk.64.ffn_up.weight (size = 73113600 bytes) -- ignoring
+0.01.031.268 W model has unused tensor blk.64.nextn.eh_proj.weight (size = 43008000 bytes) -- ignoring
+0.01.031.271 W model has unused tensor blk.64.nextn.enorm.weight (size = 20480 bytes) -- ignoring
+0.01.031.274 W model has unused tensor blk.64.nextn.hnorm.weight (size = 20480 bytes) -- ignoring
+0.01.031.282 W model has unused tensor blk.64.nextn.shared_head_norm.weight (size = 20480 bytes) -- ignoring
+0.04.015.556 I cmn          init: llama threadpool init, n_threads = 16
+0.04.195.879 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 196608, kv_unified = 'true'
+0.04.200.603 W srv          init: chat template supports preserving reasoning, it is enabled by default (may use more tokens, disable via --no-reasoning-preserve)
+0.04.200.653 I srv  llama_server: model loaded
+0.04.200.658 I srv  llama_server: listening on http://127.0.0.1:8091
+0.04.588.851 I slot get_availabl: id  0 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.04.589.872 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.08.075.981 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =   6144, progress = 0.25, t =   3.49 s / 1762.61 tokens per second
+0.09.465.019 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =   8192, progress = 0.34, t =   4.87 s / 1680.49 tokens per second
+0.10.881.026 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  10240, progress = 0.42, t =   6.29 s / 1627.78 tokens per second
+0.12.321.643 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  12288, progress = 0.51, t =   7.73 s / 1589.36 tokens per second
+0.13.788.439 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  14336, progress = 0.59, t =   9.20 s / 1558.57 tokens per second
+0.15.280.141 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  16384, progress = 0.68, t =  10.69 s / 1532.66 tokens per second
+0.16.796.636 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  18432, progress = 0.76, t =  12.21 s / 1510.03 tokens per second
+0.18.337.880 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  20480, progress = 0.85, t =  13.75 s / 1489.71 tokens per second
+0.19.771.447 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  22131, progress = 0.92, t =  15.18 s / 1457.79 tokens per second
+0.21.253.218 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  24138, progress = 1.00, t =  16.66 s / 1448.60 tokens per second
+0.21.994.937 I slot  prefix_save: id  0 | task 0 | saved prompt prefix to the prompt cache, n_tokens = 24138, n_checkpoints = 1, size = 951.636 MiB
+0.22.124.799 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  24175, progress = 1.00, t =  17.53 s / 1378.70 tokens per second
+0.22.895.672 I slot get_availabl: id  1 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.22.976.977 I slot apply_attach: id  1 | task -1 | attached 24138 prompt tokens from slot 0
+0.22.977.632 I slot launch_slot_: id  1 | task 33 | processing task, is_child = 0
+0.24.139.429 I slot get_availabl: id  2 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.24.220.666 I slot apply_attach: id  2 | task -1 | attached 24138 prompt tokens from slot 0
+0.24.221.334 I slot launch_slot_: id  2 | task 54 | processing task, is_child = 0
+0.27.487.791 I slot print_timing: id  0 | task 0 | n_gen =    100, tg =  18.91 t/s, tg_3s =  19.11 t/s
+0.28.462.786 I slot print_timing: id  1 | task 33 | n_gen =    100, tg =  19.38 t/s, tg_3s =  19.57 t/s
+0.29.449.069 I slot print_timing: id  2 | task 54 | n_gen =    100, tg =  20.44 t/s, tg_3s =  20.65 t/s
+0.29.644.104 W srv          stop: cancel task, id_task = 0
+0.29.644.312 W srv          stop: cancel task, id_task = 33
+0.29.644.374 I srv    operator(): operator(): cleaning up before exit...
+0.29.644.499 W srv          stop: cancel task, id_task = 54

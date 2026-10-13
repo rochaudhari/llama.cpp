@@ -1,0 +1,25 @@
+0.00.089.393 I srv  llama_server: initializing ...
+0.00.089.404 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.089.753 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.093.788 I srv    load_model: loading model '/localhome/local-rochaudhari/roshan/models/Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf'
+0.00.652.820 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.04.006.293 I cmn          init: llama threadpool init, n_threads = 16
+0.04.134.825 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 196608, kv_unified = 'true'
+0.04.141.347 I srv  llama_server: model loaded
+0.04.141.355 I srv  llama_server: listening on http://127.0.0.1:8091
+0.04.565.704 I slot get_availabl: id  0 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.04.566.867 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.07.724.638 I slot  prefix_save: id  0 | task 0 | saved prompt prefix to the prompt cache, n_tokens = 13959, n_checkpoints = 0, size = 695.385 MiB
+0.08.041.827 I slot get_availabl: id  1 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.08.043.032 I slot apply_attach: id  1 | task -1 | attached 13965 prompt tokens from slot 0
+0.08.043.751 I slot launch_slot_: id  1 | task 32 | processing task, is_child = 0
+0.08.412.242 I slot get_availabl: id  2 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.08.413.440 I slot apply_attach: id  2 | task -1 | attached 13965 prompt tokens from slot 0
+0.08.414.091 I slot launch_slot_: id  2 | task 54 | processing task, is_child = 0
+0.10.781.679 I slot print_timing: id  0 | task 0 | n_gen =    168, tg =  55.63 t/s, tg_3s =  55.96 t/s
+0.11.106.302 I slot print_timing: id  1 | task 32 | n_gen =    161, tg =  53.04 t/s, tg_3s =  53.37 t/s
+0.11.471.018 I slot print_timing: id  2 | task 54 | n_gen =    159, tg =  52.53 t/s, tg_3s =  52.86 t/s
+0.13.484.879 W srv          stop: cancel task, id_task = 0
+0.13.485.157 I srv    operator(): operator(): cleaning up before exit...
+0.13.485.177 W srv          stop: cancel task, id_task = 32
+0.13.485.312 W srv          stop: cancel task, id_task = 54

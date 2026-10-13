@@ -1,0 +1,17 @@
+=== Qwen3.6-35B-A3B-UD-Q4_K_M s1 03:56:23
+=== Qwen3.6-35B-A3B-UD-Q4_K_M s2 03:58:15
+=== Qwen3.6-35B-A3B-UD-Q4_K_M s3 03:59:31
+=== Qwen3.6-35B-A3B-UD-Q4_K_M s3 --kv-debug --reps 1 04:08:46
+=== Qwen3.6-35B-A3B-UD-Q4_K_M s4a 04:11:51
+=== Qwen3.6-35B-A3B-UD-Q4_K_M s4b 04:14:26
+=== Qwen3.6-35B-A3B-UD-Q4_K_M s5 04:14:58
+=== Qwen3.6-35B-A3B-UD-Q4_K_M s5 --kv-debug --reps 1 04:20:12
+=== Qwen3-30B-A3B-Instruct-2507-Q4_K_M s1 04:21:58
+=== Qwen3-30B-A3B-Instruct-2507-Q4_K_M s2 04:24:22
+=== Qwen3-30B-A3B-Instruct-2507-Q4_K_M s3 04:25:49
+=== Qwen3-30B-A3B-Instruct-2507-Q4_K_M s3 --kv-debug --reps 1 04:39:56
+=== Qwen3-30B-A3B-Instruct-2507-Q4_K_M s4a 04:44:39
+=== Qwen3-30B-A3B-Instruct-2507-Q4_K_M s4b 04:46:28
+=== Qwen3-30B-A3B-Instruct-2507-Q4_K_M s5 04:46:59
+=== Qwen3-30B-A3B-Instruct-2507-Q4_K_M s5 --kv-debug --reps 1 04:54:26
+=== done 04:56:56

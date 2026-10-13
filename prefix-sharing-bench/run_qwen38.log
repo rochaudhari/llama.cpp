@@ -1,0 +1,9 @@
+=== Qwen3.8-27B-UD-Q4_K_M s1 05:51:40
+=== Qwen3.8-27B-UD-Q4_K_M s2 05:55:15
+=== Qwen3.8-27B-UD-Q4_K_M s3 05:58:03
+=== Qwen3.8-27B-UD-Q4_K_M s3 --kv-debug --reps 1 06:21:10
+=== Qwen3.8-27B-UD-Q4_K_M s4a 06:28:53
+=== Qwen3.8-27B-UD-Q4_K_M s4b 06:34:10
+=== Qwen3.8-27B-UD-Q4_K_M s5 06:35:12
+=== Qwen3.8-27B-UD-Q4_K_M s5 --kv-debug --reps 1 06:47:37
+=== done 06:51:45

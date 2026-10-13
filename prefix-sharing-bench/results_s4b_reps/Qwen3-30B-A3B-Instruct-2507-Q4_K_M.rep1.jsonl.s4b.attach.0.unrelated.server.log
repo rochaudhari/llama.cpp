@@ -1,0 +1,40 @@
+0.00.093.085 I srv  llama_server: initializing ...
+0.00.093.098 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.093.468 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.097.627 I srv    load_model: loading model '/localhome/local-rochaudhari/roshan/models/Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf'
+0.00.657.153 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.04.032.372 I cmn          init: llama threadpool init, n_threads = 16
+0.04.161.231 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 196608, kv_unified = 'true'
+0.04.167.764 I srv  llama_server: model loaded
+0.04.167.772 I srv  llama_server: listening on http://127.0.0.1:8091
+0.04.607.745 I slot get_availabl: id  0 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.04.608.913 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.07.742.690 I slot  prefix_save: id  0 | task 0 | saved prompt prefix to the prompt cache, n_tokens = 13955, n_checkpoints = 0, size = 695.185 MiB
+0.08.249.390 I slot get_availabl: id  1 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.08.249.465 I slot launch_slot_: id  1 | task 47 | processing task, is_child = 0
+0.08.249.702 I slot get_availabl: id  2 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.08.249.735 I slot launch_slot_: id  2 | task 48 | processing task, is_child = 0
+0.08.249.847 I slot get_availabl: id  3 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.08.249.867 I slot launch_slot_: id  3 | task 49 | processing task, is_child = 0
+0.08.250.010 W slot   operator(): id  2 | task 48 | cache reuse is not supported - ignoring n_cache_reuse = 256
+0.08.502.096 W srv          stop: cancel task, id_task = 49
+0.08.520.208 I slot      release: id  3 | task 49 | stop processing: n_tokens = 29, truncated = 0
+0.08.674.745 I slot print_timing: id  2 | task 48 | prompt eval time =      55.55 ms /    18 tokens (    3.09 ms per token,   324.03 tokens per second)
+0.08.674.750 I slot print_timing: id  2 | task 48 |        eval time =     369.17 ms /    20 tokens (   19.43 ms per token,    51.47 tokens per second)
+0.08.674.751 I slot print_timing: id  2 | task 48 |       total time =     424.72 ms /    38 tokens
+0.08.674.757 I slot print_timing: id  2 | task 48 |    graphs reused =         55
+0.08.674.758 I slot print_timing: id  2 | task 48 |   graph reallocs =          0    /     0        (same size) / (changed size)
+0.08.674.788 I slot      release: id  2 | task 48 | stop processing: n_tokens = 37, truncated = 0
+0.08.851.457 I slot print_timing: id  1 | task 47 | prompt eval time =      54.81 ms /    18 tokens (    3.05 ms per token,   328.38 tokens per second)
+0.08.851.461 I slot print_timing: id  1 | task 47 |        eval time =     546.76 ms /    30 tokens (   18.85 ms per token,    53.04 tokens per second)
+0.08.851.462 I slot print_timing: id  1 | task 47 |       total time =     601.58 ms /    48 tokens
+0.08.851.463 I slot print_timing: id  1 | task 47 |    graphs reused =         64
+0.08.851.463 I slot print_timing: id  1 | task 47 |   graph reallocs =          0    /     0        (same size) / (changed size)
+0.08.851.475 I slot      release: id  1 | task 47 | stop processing: n_tokens = 47, truncated = 0
+0.09.549.380 I slot print_timing: id  0 | task 0 | prompt eval time =    3188.74 ms / 13993 tokens (    0.23 ms per token,  4388.26 tokens per second)
+0.09.549.384 I slot print_timing: id  0 | task 0 |        eval time =    1750.61 ms /   128 tokens (   13.78 ms per token,    72.55 tokens per second)
+0.09.549.385 I slot print_timing: id  0 | task 0 |       total time =    4939.34 ms / 14121 tokens
+0.09.549.386 I slot print_timing: id  0 | task 0 |    graphs reused =        122
+0.09.549.387 I slot print_timing: id  0 | task 0 |   graph reallocs =          0    /     0        (same size) / (changed size)
+0.09.549.946 I slot      release: id  0 | task 0 | stop processing: n_tokens = 14120, truncated = 0
+0.09.555.111 I srv    operator(): operator(): cleaning up before exit...

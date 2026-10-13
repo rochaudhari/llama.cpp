@@ -1,0 +1,28 @@
+0.00.088.975 I srv  llama_server: initializing ...
+0.00.088.989 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.089.363 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.093.512 I srv    load_model: loading model '/localhome/local-rochaudhari/roshan/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf'
+0.04.816.547 I cmn          init: llama threadpool init, n_threads = 16
+0.04.931.901 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 196608, kv_unified = 'true'
+0.04.935.836 W srv          init: chat template supports preserving reasoning, it is enabled by default (may use more tokens, disable via --no-reasoning-preserve)
+0.04.935.875 I srv  llama_server: model loaded
+0.04.935.879 I srv  llama_server: listening on http://127.0.0.1:8091
+0.05.408.330 I slot get_availabl: id  0 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.05.409.389 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.08.125.661 I slot  prefix_save: id  0 | task 0 | saved prompt prefix to the prompt cache, n_tokens = 14139, n_checkpoints = 1, size = 209.843 MiB
+0.08.469.790 I slot get_availabl: id  1 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.08.505.547 I slot apply_attach: id  1 | task -1 | attached 12132 prompt tokens from slot 0
+0.08.506.142 I slot launch_slot_: id  1 | task 34 | processing task, is_child = 0
+0.09.272.703 I slot  prefix_save: id  1 | task 34 | saved prompt prefix to the prompt cache, n_tokens = 14139, n_checkpoints = 2, size = 209.843 MiB
+0.09.699.527 I slot get_availabl: id  2 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.09.735.213 I slot apply_attach: id  2 | task -1 | attached 14083 prompt tokens from slot 1
+0.09.735.819 I slot launch_slot_: id  2 | task 60 | processing task, is_child = 0
+0.10.002.392 I slot  prefix_save: id  2 | task 60 | saved prompt prefix to the prompt cache, n_tokens = 14139, n_checkpoints = 1, size = 209.843 MiB
+0.11.247.662 I slot print_timing: id  0 | task 0 | n_gen =    120, tg =  39.59 t/s, tg_3s =  39.93 t/s
+0.12.446.506 I slot print_timing: id  1 | task 34 | n_gen =    166, tg =  54.74 t/s, tg_3s =  55.08 t/s
+0.13.178.289 I slot print_timing: id  2 | task 60 | n_gen =    187, tg =  61.69 t/s, tg_3s =  62.02 t/s
+0.14.249.410 I slot print_timing: id  0 | task 0 | n_gen =    305, tg =  50.60 t/s, tg_3s =  61.63 t/s
+0.15.189.721 W srv          stop: cancel task, id_task = 0
+0.15.189.897 W srv          stop: cancel task, id_task = 34
+0.15.189.978 I srv    operator(): operator(): cleaning up before exit...
+0.15.190.185 W srv          stop: cancel task, id_task = 60

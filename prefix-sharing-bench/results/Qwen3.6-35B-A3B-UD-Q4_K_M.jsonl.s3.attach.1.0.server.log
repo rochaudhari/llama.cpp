@@ -1,0 +1,25 @@
+0.00.088.842 I srv  llama_server: initializing ...
+0.00.088.856 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.089.226 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.093.379 I srv    load_model: loading model '/localhome/local-rochaudhari/roshan/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf'
+0.04.817.204 I cmn          init: llama threadpool init, n_threads = 16
+0.04.932.804 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 196608, kv_unified = 'true'
+0.04.936.804 W srv          init: chat template supports preserving reasoning, it is enabled by default (may use more tokens, disable via --no-reasoning-preserve)
+0.04.936.850 I srv  llama_server: model loaded
+0.04.936.854 I srv  llama_server: listening on http://127.0.0.1:8091
+0.05.410.284 I slot get_availabl: id  0 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.05.411.617 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.08.150.360 I slot  prefix_save: id  0 | task 0 | saved prompt prefix to the prompt cache, n_tokens = 14142, n_checkpoints = 1, size = 209.874 MiB
+0.08.467.625 I slot get_availabl: id  1 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.08.504.479 I slot apply_attach: id  1 | task -1 | attached 14142 prompt tokens from slot 0
+0.08.505.103 I slot launch_slot_: id  1 | task 31 | processing task, is_child = 0
+0.08.938.285 I slot get_availabl: id  2 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.08.974.061 I slot apply_attach: id  2 | task -1 | attached 14142 prompt tokens from slot 0
+0.08.974.676 I slot launch_slot_: id  2 | task 56 | processing task, is_child = 0
+0.11.282.038 I slot print_timing: id  0 | task 0 | n_gen =    182, tg =  60.02 t/s, tg_3s =  60.35 t/s
+0.11.664.500 I slot print_timing: id  1 | task 31 | n_gen =    183, tg =  60.64 t/s, tg_3s =  60.97 t/s
+0.12.148.461 I slot print_timing: id  2 | task 56 | n_gen =    189, tg =  62.43 t/s, tg_3s =  62.77 t/s
+0.14.150.588 W srv          stop: cancel task, id_task = 0
+0.14.150.831 I srv    operator(): operator(): cleaning up before exit...
+0.14.150.875 W srv          stop: cancel task, id_task = 31
+0.14.151.011 W srv          stop: cancel task, id_task = 56

@@ -1,0 +1,39 @@
+0.00.097.934 I srv  llama_server: initializing ...
+0.00.097.946 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.098.308 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.102.469 I srv    load_model: loading model '/localhome/local-rochaudhari/roshan/models/Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf'
+0.00.659.565 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.04.037.407 I cmn          init: llama threadpool init, n_threads = 16
+0.04.164.726 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 196608, kv_unified = 'true'
+0.04.171.215 I srv  llama_server: model loaded
+0.04.171.222 I srv  llama_server: listening on http://127.0.0.1:8091
+0.04.630.547 I slot get_availabl: id  0 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.04.631.728 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.07.777.916 I slot  prefix_save: id  0 | task 0 | saved prompt prefix to the prompt cache, n_tokens = 13959, n_checkpoints = 0, size = 695.385 MiB
+0.07.921.104 I slot print_timing: id  0 | task 0 | prompt eval time =    3201.66 ms / 13996 tokens (    0.23 ms per token,  4371.49 tokens per second)
+0.07.921.108 I slot print_timing: id  0 | task 0 |        eval time =      87.37 ms /     8 tokens (   12.48 ms per token,    80.12 tokens per second)
+0.07.921.108 I slot print_timing: id  0 | task 0 |       total time =    3289.03 ms / 14004 tokens
+0.07.921.112 I slot print_timing: id  0 | task 0 |    graphs reused =          7
+0.07.921.113 I slot print_timing: id  0 | task 0 |   graph reallocs =          0    /     0        (same size) / (changed size)
+0.07.921.674 I slot      release: id  0 | task 0 | stop processing: n_tokens = 14003, truncated = 0
+0.07.998.057 I slot get_availabl: id  1 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.08.044.719 I srv          load: restored prompt prefix from the prompt cache, n_tokens = 13959, n_reuse = 3479
+0.08.045.408 I slot launch_slot_: id  1 | task 20 | processing task, is_child = 0
+0.10.778.725 I slot  prefix_save: id  1 | task 20 | saved prompt prefix to the prompt cache, n_tokens = 13959, n_checkpoints = 0, size = 695.385 MiB
+0.10.906.592 I slot print_timing: id  1 | task 20 | prompt eval time =    2779.79 ms / 10517 tokens (    0.26 ms per token,  3783.38 tokens per second)
+0.10.906.598 I slot print_timing: id  1 | task 20 |        eval time =      81.02 ms /     8 tokens (   11.57 ms per token,    86.40 tokens per second)
+0.10.906.599 I slot print_timing: id  1 | task 20 |       total time =    2860.81 ms / 10525 tokens
+0.10.906.601 I slot print_timing: id  1 | task 20 |    graphs reused =         13
+0.10.906.601 I slot print_timing: id  1 | task 20 |   graph reallocs =          0    /     0        (same size) / (changed size)
+0.10.907.206 I slot      release: id  1 | task 20 | stop processing: n_tokens = 14003, truncated = 0
+0.10.983.002 I slot get_availabl: id  2 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.11.028.705 I srv          load: restored prompt prefix from the prompt cache, n_tokens = 13959, n_reuse = 3479
+0.11.029.406 I slot launch_slot_: id  2 | task 39 | processing task, is_child = 0
+0.13.756.448 I slot  prefix_save: id  2 | task 39 | saved prompt prefix to the prompt cache, n_tokens = 13959, n_checkpoints = 0, size = 695.385 MiB
+0.13.884.199 I slot print_timing: id  2 | task 39 | prompt eval time =    2773.45 ms / 10517 tokens (    0.26 ms per token,  3792.03 tokens per second)
+0.13.884.203 I slot print_timing: id  2 | task 39 |        eval time =      80.97 ms /     8 tokens (   11.57 ms per token,    86.45 tokens per second)
+0.13.884.204 I slot print_timing: id  2 | task 39 |       total time =    2854.42 ms / 10525 tokens
+0.13.884.205 I slot print_timing: id  2 | task 39 |    graphs reused =         19
+0.13.884.205 I slot print_timing: id  2 | task 39 |   graph reallocs =          0    /     0        (same size) / (changed size)
+0.13.884.777 I slot      release: id  2 | task 39 | stop processing: n_tokens = 14003, truncated = 0
+0.13.891.417 I srv    operator(): operator(): cleaning up before exit...

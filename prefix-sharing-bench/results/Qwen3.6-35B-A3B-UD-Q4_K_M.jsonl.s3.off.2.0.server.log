@@ -1,0 +1,29 @@
+0.00.089.560 I srv  llama_server: initializing ...
+0.00.089.574 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.089.934 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.094.041 I srv    load_model: loading model '/localhome/local-rochaudhari/roshan/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf'
+0.04.809.776 I cmn          init: llama threadpool init, n_threads = 16
+0.04.927.538 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 196608, kv_unified = 'true'
+0.04.931.518 W srv          init: chat template supports preserving reasoning, it is enabled by default (may use more tokens, disable via --no-reasoning-preserve)
+0.04.931.563 I srv  llama_server: model loaded
+0.04.931.568 I srv  llama_server: listening on http://127.0.0.1:8091
+0.05.398.978 I slot get_availabl: id  0 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.05.400.177 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.08.436.227 I slot get_availabl: id  1 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.08.436.834 I slot launch_slot_: id  1 | task 34 | processing task, is_child = 0
+0.11.650.051 I slot print_timing: id  1 | task 34 | prompt processing, n_tokens =  14142, progress = 1.00, t =   3.21 s / 4402.02 tokens per second
+0.11.736.874 I slot print_timing: id  1 | task 34 | prompt processing, n_tokens =  14179, progress = 1.00, t =   3.30 s / 4297.33 tokens per second
+0.12.122.157 I slot get_availabl: id  2 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.12.122.792 I slot launch_slot_: id  2 | task 66 | processing task, is_child = 0
+0.15.204.734 I slot print_timing: id  2 | task 66 | prompt processing, n_tokens =  12135, progress = 0.86, t =   3.08 s / 3938.58 tokens per second
+0.15.759.853 I slot print_timing: id  2 | task 66 | prompt processing, n_tokens =  14142, progress = 1.00, t =   3.64 s / 3889.23 tokens per second
+0.15.852.597 I slot print_timing: id  2 | task 66 | prompt processing, n_tokens =  14179, progress = 1.00, t =   3.73 s / 3802.30 tokens per second
+0.16.589.786 I slot print_timing: id  0 | task 0 | n_gen =    100, tg =  11.81 t/s, tg_3s =  11.93 t/s
+0.17.212.036 I slot print_timing: id  1 | task 34 | n_gen =    100, tg =  18.33 t/s, tg_3s =  18.51 t/s
+0.18.941.546 I slot print_timing: id  2 | task 66 | n_gen =    161, tg =  53.13 t/s, tg_3s =  53.47 t/s
+0.19.596.142 I slot print_timing: id  0 | task 0 | n_gen =    260, tg =  22.74 t/s, tg_3s =  53.22 t/s
+0.20.220.650 I slot print_timing: id  1 | task 34 | n_gen =    260, tg =  30.80 t/s, tg_3s =  53.18 t/s
+0.20.955.713 W srv          stop: cancel task, id_task = 0
+0.20.956.169 W srv          stop: cancel task, id_task = 34
+0.20.956.224 I srv    operator(): operator(): cleaning up before exit...
+0.20.956.364 W srv          stop: cancel task, id_task = 66
