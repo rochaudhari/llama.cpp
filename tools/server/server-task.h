@@ -654,6 +654,9 @@ struct server_prompt_cache_state {
     server_prompt prompt;
     server_prompt_data data;
 
+    // prefix entries hold only the shared start of prompts and are copied, not moved, on load
+    bool is_prefix = false;
+
     size_t size() const {
         size_t res = data.size();
 
@@ -685,9 +688,35 @@ struct server_prompt_cache {
 
     server_prompt_cache_state * alloc(const server_prompt & prompt, size_t state_size_main, size_t state_size_drft);
 
+    // the memory can drop the tokens after any position, so a prefix entry can be used up to a partial match
+    // otherwise a partial match is used only up to one of the checkpoints of the entry
+    bool can_truncate = false;
+
+    // min number of tokens to reuse from a partial match of a prefix entry
+    int32_t min_reuse = 0;
+
+    server_prompt_cache_state * alloc_prefix(const server_tokens & tokens, const std::list<common_prompt_checkpoint> & checkpoints, size_t state_size);
+
+    // true if a prefix entry holds exactly the first n tokens
+    bool has_prefix(const server_tokens & tokens, int n) const;
+
+    // longest common prefix of the tokens with any cached prompt
+    int n_lcp_max(const server_tokens & tokens) const;
+
+    // number of tokens that load() would reuse
+    int n_reuse(const server_prompt & prompt, const server_tokens & tokens_new);
+
     bool load(server_prompt & prompt, const server_tokens & tokens_new, llama_context * ctx_tgt, llama_context * ctx_dft, int32_t id_slot);
 
     void update();
+
+private:
+    struct match {
+        std::list<server_prompt_cache_state>::iterator it;
+        int n_reuse;
+    };
+
+    match find(const server_prompt & prompt, const server_tokens & tokens_new);
 };
 
 // used exclusively by router mode

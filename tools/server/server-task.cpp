@@ -1738,10 +1738,11 @@ server_prompt_cache_state * server_prompt_cache::alloc(const server_prompt & pro
     }
 
     // remove any cached prompts that are fully contained in the current prompt
+    // prefix entries are kept, because many prompts share them
     for (auto it = states.begin(); it != states.end();) {
         const int len = it->prompt.tokens.get_common_prefix(prompt.tokens);
 
-        if (len == (int) it->prompt.tokens.size()) {
+        if (!it->is_prefix && len == (int) it->prompt.tokens.size()) {
             SRV_TRC(" - removing obsolete cached prompt with length %d\n", len);
 
             it = states.erase(it);
@@ -1793,7 +1794,64 @@ server_prompt_cache_state * server_prompt_cache::alloc(const server_prompt & pro
     return &states.back();
 }
 
-bool server_prompt_cache::load(server_prompt & prompt, const server_tokens & tokens_new, llama_context * ctx_tgt, llama_context * ctx_dft, int32_t id_slot) {
+server_prompt_cache_state * server_prompt_cache::alloc_prefix(const server_tokens & tokens, const std::list<common_prompt_checkpoint> & checkpoints, size_t state_size) {
+    if (has_prefix(tokens, (int) tokens.size())) {
+        return nullptr;
+    }
+
+    size_t state_size_new = state_size;
+    for (const auto & ckpt : checkpoints) {
+        state_size_new += ckpt.size();
+    }
+
+    if (limit_size > 0 && state_size_new > limit_size) {
+        SRV_WRN(" - prefix state size %.3f MiB exceeds cache size limit %.3f MiB, skipping\n",
+                state_size_new / (1024.0 * 1024.0), limit_size / (1024.0 * 1024.0));
+        return nullptr;
+    }
+
+    if (limit_size > 0) {
+        while (!states.empty() && size() + state_size_new > limit_size) {
+            SRV_WRN(" - making room for prefix entry, removing oldest entry (size = %.3f MiB)\n",
+                    states.front().size() / (1024.0 * 1024.0));
+
+            states.pop_front();
+        }
+    }
+
+    std::vector<uint8_t> state_data;
+
+    try {
+        state_data.resize(state_size);
+    } catch (const std::bad_alloc & e) {
+        SRV_ERR("failed to allocate memory for prefix entry: %s\n", e.what());
+        return nullptr;
+    }
+
+    states.push_back({
+        /*.prompt    =*/ { tokens.clone(), checkpoints },
+        /*.data      =*/ { std::move(state_data), {} },
+        /*.is_prefix =*/ true,
+    });
+
+    return &states.back();
+}
+
+bool server_prompt_cache::has_prefix(const server_tokens & tokens, int n) const {
+    for (const auto & state : states) {
+        if (state.is_prefix && state.prompt.n_tokens() == n && (int) state.prompt.tokens.get_common_prefix(tokens) == n) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+int server_prompt_cache::n_reuse(const server_prompt & prompt, const server_tokens & tokens_new) {
+    return find(prompt, tokens_new).n_reuse;
+}
+
+server_prompt_cache::match server_prompt_cache::find(const server_prompt & prompt, const server_tokens & tokens_new) {
     const int lcp_best = prompt.tokens.get_common_prefix(tokens_new);
 
     float f_keep_best = prompt.tokens.size() > 0 ? float(lcp_best) / prompt.tokens.size() : -1.0f; // empty slot: any cache entry wins
@@ -1801,10 +1859,14 @@ bool server_prompt_cache::load(server_prompt & prompt, const server_tokens & tok
 
     SRV_TRC(" - looking for better prompt, base f_keep = %.3f, f_sim = %.3f\n", f_keep_best, f_sim_best);
 
-    auto it_best = states.end();
+    match res = { states.end(), lcp_best };
 
     // find the most similar cached prompt, that would also preserve the most context
     for (auto it = states.begin(); it != states.end(); ++it) {
+        if (it->is_prefix) {
+            continue;
+        }
+
         const int lcp_cur = it->prompt.tokens.get_common_prefix(tokens_new);
 
         const float f_keep_cur = float(lcp_cur) / it->prompt.tokens.size();
@@ -1821,12 +1883,62 @@ bool server_prompt_cache::load(server_prompt & prompt, const server_tokens & tok
             f_keep_best = f_keep_cur;
             f_sim_best  = f_sim_cur;
 
-            it_best = it;
+            res = { it, lcp_cur };
         }
     }
 
+    // a prefix entry is used up to where it matches, and only if this gives more than the best prompt above
+    for (auto it = states.begin(); it != states.end(); ++it) {
+        if (!it->is_prefix) {
+            continue;
+        }
+
+        const int n   = it->prompt.n_tokens();
+        const int lcp = it->prompt.tokens.get_common_prefix(tokens_new);
+
+        int n_cur = 0;
+        if (lcp >= n) {
+            n_cur = n;
+        } else if (can_truncate) {
+            n_cur = lcp;
+        } else {
+            for (const auto & ckpt : it->prompt.checkpoints) {
+                if (ckpt.n_tokens <= lcp) {
+                    n_cur = std::max<int>(n_cur, ckpt.n_tokens);
+                }
+            }
+        }
+
+        if (n_cur < std::max(1, min_reuse) || n_cur <= res.n_reuse || n_cur >= (int) tokens_new.size()) {
+            continue;
+        }
+
+        res = { it, n_cur };
+    }
+
+    return res;
+}
+
+int server_prompt_cache::n_lcp_max(const server_tokens & tokens) const {
+    int res = 0;
+
+    for (const auto & state : states) {
+        res = std::max<int>(res, state.prompt.tokens.get_common_prefix(tokens));
+    }
+
+    return res;
+}
+
+bool server_prompt_cache::load(server_prompt & prompt, const server_tokens & tokens_new, llama_context * ctx_tgt, llama_context * ctx_dft, int32_t id_slot) {
+    const auto best = find(prompt, tokens_new);
+
+    auto it_best = best.it;
+
     if (it_best != states.end()) {
-        SRV_TRC(" - found better prompt with f_keep = %.3f, f_sim = %.3f\n", f_keep_best, f_sim_best);
+        SRV_TRC(" - found better prompt with n_reuse = %d, is_prefix = %d\n", best.n_reuse, it_best->is_prefix);
+
+        // prefix entries are copied, other entries are moved into the slot
+        const bool keep = it_best->is_prefix;
 
         {
             auto & data = it_best->data.main;
@@ -1839,8 +1951,10 @@ bool server_prompt_cache::load(server_prompt & prompt, const server_tokens & tok
                 return false;
             }
 
-            data.clear();
-            data.shrink_to_fit();
+            if (!keep) {
+                data.clear();
+                data.shrink_to_fit();
+            }
         }
 
         {
@@ -1857,14 +1971,25 @@ bool server_prompt_cache::load(server_prompt & prompt, const server_tokens & tok
                     return false;
                 }
 
-                data.clear();
-                data.shrink_to_fit();
+                if (!keep) {
+                    data.clear();
+                    data.shrink_to_fit();
+                }
             }
         }
 
-        prompt = std::move(it_best->prompt);
+        if (keep) {
+            SRV_INF("restored prompt prefix from the prompt cache, n_tokens = %d, n_reuse = %d\n", it_best->prompt.n_tokens(), best.n_reuse);
 
-        states.erase(it_best);
+            prompt = it_best->prompt.clone();
+
+            // move to the back, so the eviction of old entries keeps it
+            states.splice(states.end(), states, it_best);
+        } else {
+            prompt = std::move(it_best->prompt);
+
+            states.erase(it_best);
+        }
     }
 
     return true;

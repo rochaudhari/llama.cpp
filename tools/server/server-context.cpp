@@ -305,6 +305,12 @@ struct server_slot {
 
     server_prompt prompt;
 
+    // save the prompt prefix to the prompt cache when the prompt reaches this many tokens, -1 = no
+    int32_t n_prefix_save = -1;
+
+    // create a checkpoint when the prompt reaches this many tokens (where it diverges from a known prompt), -1 = no
+    int32_t n_ckpt_div = -1;
+
     bool prompt_save(server_prompt_cache & prompt_cache) const {
         if (prompt.tokens.size() == 0) {
             return false;
@@ -1013,6 +1019,9 @@ private:
     // if swa_full is enabled, this is set to 0 to simulate a non-SWA model
     int32_t n_swa;
 
+    // the memory can share prompt prefixes between slots (cache_prefix, slot_attach)
+    bool can_share_mem = false;
+
     // slots / clients
     std::vector<server_slot> slots;
 
@@ -1384,6 +1393,15 @@ private:
             SRV_WRN("%s", "speculative decoding not supported by this context\n");
         }
 
+        // plain KV cache, or recurrent/hybrid memory resumed from checkpoints - no SWA
+        {
+            const bool is_rs = llama_model_is_recurrent(model_tgt) || llama_model_is_hybrid(model_tgt);
+
+            can_share_mem = llama_model_n_swa(model_tgt) == 0 && (
+                    (ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_PART && !is_rs) ||
+                    (ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_FULL &&  is_rs));
+        }
+
         if (ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_FULL) {
             SRV_TRC("%s", "speculative decoding will use checkpoints\n");
         }
@@ -1506,6 +1524,9 @@ private:
             SRV_TRC("%s", "use `--cache-ram 0` to disable the prompt cache\n");
 
             prompt_cache = std::make_unique<server_prompt_cache>(params_base.cache_ram_mib, n_ctx);
+
+            prompt_cache->can_truncate = ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_PART;
+            prompt_cache->min_reuse    = params_base.prefix_min_tokens;
         } else {
             SRV_TRC("%s", "prompt cache is disabled - use `--cache-ram N` to enable it\n");
         }
@@ -1580,6 +1601,28 @@ private:
                 }
                 SRV_DBG("%s", "__TEST_TAG_CACHE_IDLE_SLOTS_ENABLED__\n");
             }
+        }
+
+        if (params_base.cache_prefix && params_base.cache_ram_mib == 0) {
+            SRV_WRN("%s", "--cache-prefix requires --cache-ram, disabling\n");
+            params_base.cache_prefix = false;
+        }
+
+        if (params_base.slot_attach && !params_base.kv_unified) {
+            SRV_WRN("%s", "--slot-attach requires --kv-unified, disabling\n");
+            params_base.slot_attach = false;
+        }
+
+        if ((params_base.cache_prefix || params_base.slot_attach) && !can_share_mem) {
+            SRV_WRN("%s", "--cache-prefix and --slot-attach are not supported by this model, disabling\n");
+            params_base.cache_prefix = false;
+            params_base.slot_attach  = false;
+        }
+
+        // cache reuse moves KV cells, which would corrupt cells that other slots share
+        if (params_base.slot_attach && params_base.n_cache_reuse > 0) {
+            SRV_WRN("%s", "--cache-reuse is not supported with --slot-attach, disabling\n");
+            params_base.n_cache_reuse = 0;
         }
 
         {
@@ -1693,6 +1736,86 @@ private:
         return nullptr;
     }
 
+    // prompt prefixes are shared only for plain text completions without draft model or adapters
+    bool can_share_prefix(const server_task & task) const {
+        return task.type == SERVER_TASK_TYPE_COMPLETION && task.params.cache_prompt && !task.tokens.has_mtmd &&
+               ctx_dft == nullptr && !spec && params_base.lora_adapters.empty();
+    }
+
+    struct slot_attach {
+        const server_slot * donor = nullptr;
+
+        int32_t n_tokens = 0;
+
+        // state of the memory that cannot be truncated, at n_tokens
+        const common_prompt_checkpoint * ckpt = nullptr;
+    };
+
+    // find the other slot that holds the longest prefix of the task prompt
+    slot_attach find_attach(const server_slot & slot, const server_task & task) const {
+        slot_attach res;
+
+        if (!params_base.slot_attach || !params_base.kv_unified || !can_share_prefix(task)) {
+            return res;
+        }
+
+        // shared cells must not move (cache reuse is disabled together with slot_attach)
+        if (params_base.ctx_shift) {
+            return res;
+        }
+
+        // recurrent/hybrid memory resumes only at a checkpoint (see can_share_mem)
+        const bool use_ckpt = ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_FULL;
+
+        for (const auto & other : slots) {
+            if (other.id == slot.id || other.prompt.tokens.has_mtmd) {
+                continue;
+            }
+
+            const int32_t n_lcp = other.prompt.tokens.get_common_prefix(task.tokens);
+            if (n_lcp <= res.n_tokens) {
+                continue;
+            }
+
+            if (!use_ckpt) {
+                res = { &other, n_lcp, nullptr };
+                continue;
+            }
+
+            for (const auto & ckpt : other.prompt.checkpoints) {
+                if (ckpt.n_tokens <= n_lcp && ckpt.n_tokens > res.n_tokens) {
+                    res = { &other, (int32_t) ckpt.n_tokens, &ckpt };
+                }
+            }
+        }
+
+        if (res.n_tokens < params_base.prefix_min_tokens) {
+            return {};
+        }
+
+        return res;
+    }
+
+    // share the KV cells of the donor prefix with the slot, no data is copied
+    void apply_attach(server_slot & slot, const slot_attach & plan) {
+        const auto & donor = *plan.donor;
+
+        slot.prompt_clear();
+        slot.mem.seq_cp(donor.id, slot.id, 0, plan.n_tokens);
+
+        if (plan.ckpt) {
+            // the shared recurrent state of the donor is past n_tokens - replace it with the one at n_tokens
+            plan.ckpt->load_tgt(ctx_tgt, slot.id, LLAMA_STATE_SEQ_FLAGS_PARTIAL_ONLY);
+
+            slot.prompt.checkpoints.push_back(*plan.ckpt);
+        }
+
+        slot.prompt.tokens = donor.prompt.tokens.clone();
+        slot.prompt.tokens.keep_first(plan.n_tokens);
+
+        SLT_INF(slot, "attached %d prompt tokens from slot %d\n", plan.n_tokens, donor.id);
+    }
+
     server_slot * get_available_slot(const server_task & task) {
         server_slot * ret = nullptr;
 
@@ -1782,6 +1905,9 @@ private:
             // cache prompts only for the tasks that reuse them
             update_cache = update_cache && !task.is_stateless();
 
+            // sharing the cells of another slot is preferred over a copy from the prompt cache
+            const auto attach = ret->is_processing() ? slot_attach() : find_attach(*ret, task);
+
             if (update_cache) {
                 SRV_TRC("%s", "updating prompt cache\n");
 
@@ -1789,13 +1915,19 @@ private:
 
                 ret->prompt_save(*prompt_cache);
 
-                if (!ret->prompt_load(*prompt_cache, task.tokens)) {
+                if (attach.donor && attach.n_tokens >= prompt_cache->n_reuse(ret->prompt, task.tokens)) {
+                    ret->prompt_clear();
+                } else if (!ret->prompt_load(*prompt_cache, task.tokens)) {
                     ret->prompt_clear();
                 }
 
                 prompt_cache->update();
 
                 SRV_TRC("prompt cache update took %.2f ms\n", (ggml_time_us() - t_start) / 1000.0);
+            }
+
+            if (attach.donor && attach.n_tokens > (int32_t) ret->prompt.tokens.get_common_prefix(task.tokens)) {
+                apply_attach(*ret, attach);
             }
         }
 
@@ -2538,6 +2670,41 @@ private:
         }
 
         return true;
+    }
+
+    // called before the decode of the batch that starts at n_prefix_save, so the memory holds only the prefix
+    void prefix_save(const server_slot & slot) {
+        const int32_t n_tokens = slot.n_prefix_save;
+
+        const size_t size = llama_state_seq_get_size_ext(ctx_tgt, slot.id, LLAMA_STATE_SEQ_FLAGS_NONE);
+
+        server_tokens tokens = slot.prompt.tokens.clone();
+        tokens.keep_first(n_tokens);
+
+        std::list<common_prompt_checkpoint> checkpoints;
+        for (const auto & ckpt : slot.prompt.checkpoints) {
+            if (ckpt.n_tokens <= n_tokens) {
+                checkpoints.push_back(ckpt);
+            }
+        }
+
+        auto * cur = prompt_cache->alloc_prefix(tokens, checkpoints, size);
+        if (cur == nullptr) {
+            return;
+        }
+
+        if (llama_state_seq_get_data_ext(ctx_tgt, cur->data.main.data(), size, slot.id, LLAMA_STATE_SEQ_FLAGS_NONE) != size) {
+            SLT_WRN(slot, "%s", "failed to save prompt prefix\n");
+
+            // alloc_prefix() added the entry at the back
+            prompt_cache->states.pop_back();
+            return;
+        }
+
+        prompt_cache->update();
+
+        SLT_INF(slot, "saved prompt prefix to the prompt cache, n_tokens = %d, n_checkpoints = %zu, size = %.3f MiB\n",
+                n_tokens, checkpoints.size(), size / (1024.0 * 1024.0));
     }
 
     // n_tokens_cur: the number of tokens added to the batch for the current slot
@@ -3632,6 +3799,10 @@ private:
                         // keep track how many tokens we can reuse from the previous state
                         int n_past = 0;
 
+                        // common prefix with the previous state of the slot, and whether cache reuse moved KV cells
+                        int  n_lcp_own  = 0;
+                        bool kv_shifted = false;
+
                         // empty prompt passed -> release the slot and send empty response
                         if (input_tokens.empty()) {
                             SLT_WRN(slot, "%s", "empty prompt - releasing slot\n");
@@ -3698,6 +3869,7 @@ private:
                             if (slot.task->params.cache_prompt && !slot.task->is_stateless()) {
                                 // reuse any previously computed tokens that are common with the new prompt
                                 n_past = slot.prompt.tokens.get_common_prefix(input_tokens);
+                                n_lcp_own = n_past;
 
                                 // the children start from the shared prefix, do not go past it
                                 if (slot.task->n_tokens_shared > 0) {
@@ -3719,7 +3891,7 @@ private:
 
                                 const bool can_cache_reuse =
                                     llama_memory_can_shift(llama_get_memory(ctx_tgt)) &&
-                                    !slot.prompt.tokens.has_mtmd;
+                                    !slot.prompt.tokens.has_mtmd && !params_base.slot_attach;
 
                                 if (!can_cache_reuse && n_cache_reuse > 0) {
                                     SLT_WRN(slot, "cache reuse is not supported - ignoring n_cache_reuse = %d\n", n_cache_reuse);
@@ -3759,6 +3931,7 @@ private:
 
                                             slot.mem.seq_rm (slot.id, head_p, head_c);
                                             slot.mem.seq_add(slot.id, head_c, head_c + n_match, kv_shift);
+                                            kv_shifted = true;
 
                                             for (size_t i = 0; i < n_match; i++) {
                                                 slot.prompt.tokens.set_token(head_p + i, slot.prompt.tokens[head_c + i]);
@@ -3917,6 +4090,40 @@ private:
                         metrics.add_prompt_cached(n_past);
 
                         slot.prompt.tokens.keep_first(n_past);
+
+                        slot.n_prefix_save = -1;
+                        slot.n_ckpt_div    = -1;
+
+                        // a state saved after cache reuse would hold keys that are not yet re-rotated
+                        if ((params_base.cache_prefix || params_base.slot_attach) && can_share_prefix(*slot.task) && !kv_shifted) {
+                            const int32_t n_prefix = slot.task->params.message_spans.first_user_message_pos();
+
+                            if (params_base.cache_prefix && prompt_cache && n_prefix >= params_base.prefix_min_tokens &&
+                                n_prefix >= n_past && n_prefix < slot.task->n_tokens() && !prompt_cache->has_prefix(input_tokens, n_prefix)) {
+                                slot.n_prefix_save = n_prefix;
+                            }
+
+                            // memory that resumes only at a checkpoint: add one where this prompt diverges from a known
+                            // prompt before the first user message, so that later prompts can share up to there
+                            if (ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_FULL && params_base.n_ctx_checkpoints > 0) {
+                                // no new checkpoint this close to the reused part
+                                const int32_t n_div_gap = 512;
+
+                                int32_t n_div = n_lcp_own;
+                                for (const auto & other : slots) {
+                                    if (other.id != slot.id && !other.prompt.tokens.has_mtmd) {
+                                        n_div = std::max<int32_t>(n_div, other.prompt.tokens.get_common_prefix(input_tokens));
+                                    }
+                                }
+                                if (prompt_cache) {
+                                    n_div = std::max<int32_t>(n_div, prompt_cache->n_lcp_max(input_tokens));
+                                }
+
+                                if (n_div < n_prefix && n_div >= params_base.prefix_min_tokens && n_div > n_past + n_div_gap) {
+                                    slot.n_ckpt_div = n_div;
+                                }
+                            }
+                        }
 
                         // this is to signal the client that the request has started processing
                         if (slot.task->params.stream) {
@@ -4091,6 +4298,11 @@ private:
                         }
                         slot.prompt.tokens.push_back(cur_tok);
 
+                        // stop at the prefix or at the divergence point, so that the state there can be saved before the next batch
+                        if (slot.prompt.n_tokens() == slot.n_prefix_save || slot.prompt.n_tokens() == slot.n_ckpt_div) {
+                            break;
+                        }
+
                         // break at the last user message, or at user messages at least min step past the last checkpoint
                         if (do_checkpoint && spans.is_user_start(slot.prompt.n_tokens())) {
                             const auto pos = slot.prompt.n_tokens();
@@ -4172,6 +4384,17 @@ private:
                             is_last_user_message || near_prompt_end ||
                             n_tokens_start > slot.prompt.checkpoints.back().n_tokens + params_base.checkpoint_min_step);
                     SLT_DBG(slot, "main/do_checkpoint = %s, pos_min = %d, pos_max = %d\n", do_checkpoint ? "yes" : "no", pos_min, pos_max);
+
+                    if (slot.n_ckpt_div >= 0 && n_tokens_start == slot.n_ckpt_div) {
+                        do_checkpoint = pos_min >= 0 && !has_mtmd;
+                        slot.n_ckpt_div = -1;
+                    }
+
+                    // the prefix entry keeps the checkpoints created earlier in this prompt, such as the one at the divergence point
+                    if (slot.n_prefix_save >= 0 && n_tokens_start == slot.n_prefix_save) {
+                        prefix_save(slot);
+                        slot.n_prefix_save = -1;
+                    }
 
                     // note: we create the checkpoint before calling llama_decode(), so the current batch is not
                     //       yet processed and therefore it is not part of the checkpoint.

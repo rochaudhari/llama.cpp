@@ -1741,6 +1741,32 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
         }
     ).set_env("LLAMA_ARG_CACHE_IDLE_SLOTS").set_examples({LLAMA_EXAMPLE_SERVER}));
     add_opt(common_arg(
+        {"--cache-prefix"},
+        {"--no-cache-prefix"},
+        "save the prompt part before the first user message (system prompt, tools) to the prompt cache and reuse it for new prompts (default: disabled, requires cache-ram)",
+        [](common_params & params, bool value) {
+            params.cache_prefix = value;
+        }
+    ).set_env("LLAMA_ARG_CACHE_PREFIX").set_examples({LLAMA_EXAMPLE_SERVER}));
+    add_opt(common_arg(
+        {"--slot-attach"},
+        {"--no-slot-attach"},
+        "start a new prompt from the KV cells of another slot that has the same prefix, without copying them (default: disabled, requires unified KV)",
+        [](common_params & params, bool value) {
+            params.slot_attach = value;
+        }
+    ).set_env("LLAMA_ARG_SLOT_ATTACH").set_examples({LLAMA_EXAMPLE_SERVER}));
+    add_opt(common_arg(
+        {"--prefix-min-tokens"}, "N",
+        string_format("min prefix length in tokens for --cache-prefix and --slot-attach (default: %d)", params.prefix_min_tokens),
+        [](common_params & params, int value) {
+            if (value < 1) {
+                throw std::invalid_argument("--prefix-min-tokens must be at least 1");
+            }
+            params.prefix_min_tokens = value;
+        }
+    ).set_env("LLAMA_ARG_PREFIX_MIN_TOKENS").set_examples({LLAMA_EXAMPLE_SERVER}));
+    add_opt(common_arg(
         {"--context-shift"},
         {"--no-context-shift"},
         string_format("whether to use context shift on infinite text generation (default: %s)", params.ctx_shift ? "enabled" : "disabled"),
