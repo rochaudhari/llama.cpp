@@ -89,6 +89,43 @@ def test_clear_and_restore():
     assert "__TEST_TAG_CACHE_IDLE_SLOT__" not in log.drain()
 
 
+# without unified KV, an idle slot that has not changed is copied to cache-ram once, not again after its copy was evicted
+def test_unchanged_idle_slot_copied_once():
+    global server
+    server.n_slots = 3
+    server.n_ctx = 3 * 2048
+    server.kv_unified = False
+    server.cache_ram = 1 # MiB, room for one of the states below
+    server.server_embeddings = True # embedding requests share the slots with completions
+    server.start()
+    log = LogReader(server.log_path)
+
+    assert "__TEST_TAG_CACHE_IDLE_SLOTS_ENABLED__" in log.drain()
+
+    def request(path, data):
+        res = server.make_request("POST", path, data=data)
+        assert res.status_code == 200
+
+    prompts = [f"{i}. " + LONG_PROMPT * 7 for i in range(3)]
+    for i, prompt in enumerate(prompts):
+        request("/completion", {"prompt": prompt, "id_slot": i})
+
+    # launching slot 2 copied idle slot 1, which evicted the copy of idle slot 0
+    assert "making room for prompt cache entry" in log.drain()
+
+    # slots 0 and 1 have not changed since their copies were made - they are not copied again
+    request("/completion", {"prompt": prompts[2] + " The knight finally reached the castle gates.", "id_slot": 2})
+    assert "__TEST_TAG_CACHE_IDLE_SLOT__" not in log.drain()
+
+    # slot 0 is reused by a prompt that shares most of its conversation - its evicted copy is made again first
+    request("/completion", {"prompt": prompts[0][:len(prompts[0]) * 4 // 5] + " Then the story took another turn.", "id_slot": 0})
+    assert "__TEST_TAG_CACHE_REUSED_SLOT__" in log.drain()
+
+    # an embedding request takes slot 1, the least recently used, and drops all of it - its evicted copy is made again first
+    request("/embeddings", {"input": "The fishermen mended their nets."})
+    assert "__TEST_TAG_CACHE_REUSED_SLOT__" in log.drain()
+
+
 def test_disabled_with_flag():
     global server
     server.no_cache_idle_slots = True

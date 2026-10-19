@@ -310,6 +310,9 @@ struct server_slot {
     // used to determine the slot that has been used the longest
     int64_t t_last_used = -1;
 
+    // the idle pass offered the conversation in this slot to the prompt cache and it has not changed since
+    bool prompt_offered = false;
+
     // generation props
     int32_t n_ctx   = 0;  // context size per slot
     int32_t n_keep  = 0;
@@ -367,6 +370,9 @@ struct server_slot {
     }
 
     bool prompt_load(server_prompt_cache & prompt_cache, const server_tokens & tokens) {
+        // the slot may receive another conversation
+        prompt_offered = false;
+
         bool res = prompt_cache.load(prompt, tokens, ctx_tgt, ctx_dft, id);
         if (!res) {
             SLT_WRN(*this, "%s", "failed to load prompt from cache\n");
@@ -660,6 +666,7 @@ struct server_slot {
             SLT_INF(*this, "stop processing: n_tokens = %d, truncated = %d\n", prompt.n_tokens(), truncated);
 
             t_last_used = ggml_time_us();
+            prompt_offered = false;
 
             state = SLOT_STATE_IDLE;
 
@@ -1897,6 +1904,14 @@ private:
                 prompt_cache->update();
 
                 SRV_TRC("prompt cache update took %.2f ms\n", (ggml_time_us() - t_start) / 1000.0);
+            } else if (prompt_cache && ret->prompt_offered &&
+                    (task.is_stateless() || ret->prompt.tokens.get_common_prefix(task.tokens) < ret->prompt.tokens.size())) {
+                // the idle pass copies an unchanged conversation once and the copy may have been evicted since:
+                // keep the conversation before the new task drops the part that it does not share - a stateless task drops all of it
+                if (ret->prompt_save(*prompt_cache)) {
+                    SLT_DBG(*ret, "%s", "__TEST_TAG_CACHE_REUSED_SLOT__\n");
+                    prompt_cache->update();
+                }
             }
         }
 
@@ -3071,11 +3086,17 @@ private:
                     if (params_base.cache_idle_slots) {
                         for (auto & slot : slots) {
                             if (!slot.is_processing()) {
-                                SLT_TRC(slot, "%s", "saving idle slot to prompt cache\n");
+                                // a conversation that is still in its slot is copied once: copying it again after its copy
+                                // was evicted only evicts other entries, and it is saved again when the slot is reused
+                                if (!slot.prompt_offered) {
+                                    SLT_TRC(slot, "%s", "saving idle slot to prompt cache\n");
 
-                                if (slot.prompt_save(*prompt_cache)) {
-                                    SLT_DBG(slot, "%s", "__TEST_TAG_CACHE_IDLE_SLOT__\n");
-                                    prompt_cache->update();
+                                    if (slot.prompt_save(*prompt_cache)) {
+                                        SLT_DBG(slot, "%s", "__TEST_TAG_CACHE_IDLE_SLOT__\n");
+                                        prompt_cache->update();
+                                    }
+
+                                    slot.prompt_offered = true;
                                 }
 
                                 if (params_base.kv_unified) {
@@ -3319,6 +3340,7 @@ private:
 
                         slot->prompt.clear();
                         slot->prompt.tokens = std::move(restored);
+                        slot->prompt_offered = false;
                     } catch (const std::exception & err) {
                         slot->prompt_clear();
                         send_error(task, std::string("Unable to restore slot: ") + err.what(), ERROR_TYPE_INVALID_REQUEST);
